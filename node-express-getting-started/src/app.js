@@ -8,6 +8,11 @@ const sayHello = (req, res, next) => {
   res.send("Hello!");
 };
 
-app.use(sayHello);
+app.use(morgan("dev"));
+app.get("/hello", sayHello);
+
+app.get("/ping", (req, res) => {
+  res.send("ok");
+});
 
 module.exports = app;
