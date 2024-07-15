@@ -1,14 +1,30 @@
 const express = require("express");
 const app = express();
 
-app.get("/states/:abbreviation", (req, res, next) => {
+const checkForAbbreviationLength = (req, res, next) => {
   const abbreviation = req.params.abbreviation;
-  if (abbreviation.length !== 2) {
-    next("State abbreviation is invalid.");
+  if (abbreviation.length === 2) {
+    next();
   } else {
-    res.send(`${abbreviation} is a nice state, I'd like to visit.`);
+    next(`State abbreviation, "${abbreviation}", is invalid.`);
   }
-});
+};
+
+app.get(
+  "/states/:abbreviation",
+  checkForAbbreviationLength,
+  (req, res, next) => {
+    res.send(`${req.params.abbreviation} is a nice state, I'd like to visit.`);
+  }
+);
+
+app.get(
+  "/travel/:abbreviation",
+  checkForAbbreviationLength,
+  (req, res, next) => {
+    res.send(`Enjoy your trip to ${req.params.abbreviation}!`);
+  }
+);
 
 app.use((req, res, next) => {
   res.send(`The route ${req.path} does not exist!`);
