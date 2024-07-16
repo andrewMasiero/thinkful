@@ -1,166 +1,141 @@
 const request = require("supertest");
-const states = require("../src/data/states-data");
-const users = require("../src/data/users-data");
+const notes = require("../src/data/notes-data");
 
-const app = require("../src/app");
+const path = require("path");
+const app = require(path.resolve(
+  `${process.env.SOLUTION_PATH || ""}`,
+  "src/app"
+));
 
 describe("App", () => {
   beforeEach(() => {
-    users.splice(0, users.length);
-    Object.keys(states).forEach((stateCode) => delete states[stateCode]);
+    notes.splice(0, notes.length);
   });
 
-  test("returns error for non-existent url", async () => {
-    const expected = "Not found: /vcuefkvuex/dijiymkfcw";
-
+  test("returns error message for non-existent note", async () => {
     const response = await request(app)
-      .get("/vcuefkvuex/dijiymkfcw")
+      .get("/notes/99")
       .set("Accept", "application/json");
 
-    expect(response.text).toEqual(expected);
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(response.text).toContain("Note id not found: 99");
   });
 
-  describe("path /users", () => {
-    test("returns list of users", async () => {
-      const expected = {
-        data: [
+  test("returns error message for non-existent route", async () => {
+    const response = await request(app)
+      .get("/physics")
+      .set("Accept", "application/json");
+
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(response.text).toContain("Not found: /physics");
+  });
+
+  describe("path /notes", () => {
+    describe("GET method", () => {
+      test("returns an array of notes", async () => {
+        const expected = [
+          { id: 5, text: "5 is the number of platonic solids" },
           {
-            id: 39,
-            first_name: "Anaïs",
-            last_name: "McCaghan",
-            email: "imccaghan12@exblog.jp",
+            id: 6,
+            text:
+              "6 is a unitary perfect number, a harmonic divisor number and a highly composite number.",
           },
-          {
-            id: 40,
-            first_name: "Bérangère",
-            last_name: "Poundford",
-            email: "apoundford13@acquirethisname.com",
-          },
-        ],
-      };
+        ];
 
-      expected.data.forEach((user) => users.push(user));
+        notes.push(...expected);
 
-      const response = await request(app)
-        .get("/users")
-        .set("Accept", "application/json");
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(expected);
-    });
-  });
+        const response = await request(app)
+          .get("/notes")
+          .set("Accept", "application/json");
 
-  describe("path /users/:userId", () => {
-    test("returns existing user", async () => {
-      const expected = {
-        data: {
-          id: 41,
-          first_name: "Publicité",
-          last_name: "Reckhouse",
-          email: "creckhouse14@tamu.edu",
-        },
-      };
-
-      users.push(expected.data);
-
-      const response = await request(app)
-        .get("/users/41")
-        .set("Accept", "application/json");
-
-      expect(response.body).toEqual(expected);
-      expect(response.status).toBe(200);
-    });
-
-    test("returns error for non-existent user id", async () => {
-      const expected = "User ID not found: 42";
-
-      const response = await request(app)
-        .get("/users/42")
-        .set("Accept", "application/json");
-
-      expect(response.text).toEqual(expected);
-    });
-  });
-
-  describe("path /states", () => {
-    test("returns all states", async () => {
-      states.AL = "Alabama";
-      states.CT = "Connecticut";
-      states.DC = "District of Columbia";
-
-      const expected = {
-        data: { ...states },
-      };
-
-      const response = await request(app)
-        .get("/states")
-        .set("Accept", "application/json");
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(expected);
-    });
-  });
-  describe("path /states/:stateCode", () => {
-    test("returns state for the specified stateCode", async () => {
-      const expected = {
-        data: {
-          stateCode: "FL",
-          name: "Florida",
-        },
-      };
-
-      states.FL = "Florida";
-
-      const response = await request(app)
-        .get("/states/FL")
-        .set("Accept", "application/json");
-
-      expect(response.body).toEqual(expected);
-      expect(response.status).toBe(200);
-    });
-
-    test("returns error for non-existent id", async () => {
-      const expected = "State code not found: AL";
-
-      const response = await request(app)
-        .get("/states/AL")
-        .set("Accept", "application/json");
-
-      expect(response.text).toEqual(expected);
-    });
-  });
-
-  describe("error handler", () => {
-    it("should respond with 500 if there is an error", async () => {
-      const middleware = app._router.stack;
-      app._router.stack = [];
-      app.use("/makeError", (req, res, next) => {
-        next("OH NO!");
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expected);
       });
-      app._router.stack = [...app._router.stack, ...middleware];
-
-      const response = await request(app).get("/makeError");
-
-      expect(response.status).toBe(500);
     });
+    describe("POST method", () => {
+      test("creates a new note and assigns id", async () => {
+        const response = await request(app)
+          .post("/notes")
+          .set("Accept", "application/json")
+          .send({ data: { text: "creates a new note and assigns id" } });
 
-    it("custom error handler created", async () => {
-      const middleware = app._router.stack.map((layer) =>
-        layer.handle.toString()
-      );
-      const exists = middleware.find((func) => {
-        let lp = func.indexOf("(");
-        if (lp === -1) {
-          return false;
-        }
-        let rp = func.indexOf(")");
-        if (rp === -1 || rp < lp) {
-          return false;
-        }
-        const args = func.slice(lp + 1, rp).split(",").length === 4;
-        return args;
+        expect(response.status).toBe(201);
+        expect(response.body.data.id).toBeGreaterThanOrEqual(1);
+        expect(response.body.data.text).toEqual(
+          "creates a new note and assigns id"
+        );
       });
 
-      expect(exists).toBeDefined();
+      test("returns 400 if text is missing", async () => {
+        const response = await request(app)
+          .post("/notes")
+          .set("Accept", "application/json")
+          .send({ data: { message: "returns 400 if text is missing" } });
+
+        expect(response.status).toBe(400);
+      });
+
+      test("returns 400 if text is empty", async () => {
+        const response = await request(app)
+          .post("/notes")
+          .set("Accept", "application/json")
+          .send({ data: { text: "" } });
+
+        expect(response.status).toBe(400);
+      });
+
+      test("returns 400 if data is missing", async () => {
+        const response = await request(app)
+          .post("/notes")
+          .set("Accept", "application/json")
+          .send({ datum: { text: "creates a new note and assigns id" } });
+
+        expect(response.status).toBe(400);
+      });
+    });
+  });
+
+  describe("path /notes/:noteId", () => {
+    describe("GET method", () => {
+      test("returns an existing note", async () => {
+        const expected = {
+          id: 42,
+          text: "The ultimate question of life, the universe, and everything",
+        };
+
+        notes.push(
+          {
+            id: 0,
+            text: "Should not appear",
+          },
+          expected
+        );
+
+        const response = await request(app)
+          .get("/notes/42")
+          .set("Accept", "application/json");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual(expected);
+      });
+      test("returns an error for non-existent note", async () => {
+        const response = await request(app)
+          .get("/notes/77")
+          .set("Accept", "application/json");
+
+        expect(response.status).toBeGreaterThanOrEqual(400);
+      });
+    });
+    describe("POST method", () => {
+      test("returns an error", async () => {
+        notes.push({ id: 1, text: "POST should not be successful" });
+        const response = await request(app)
+          .post("/notes/:noteId")
+          .set("Accept", "application/json")
+          .send({ data: { text: "POST should not be successful" } });
+
+        expect(response.status).toBeGreaterThanOrEqual(400);
+      });
     });
   });
 });

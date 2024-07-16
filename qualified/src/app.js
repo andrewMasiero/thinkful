@@ -1,45 +1,50 @@
 const express = require("express");
 const app = express();
+app.use(express.json());
+const notes = require("./data/notes-data");
 
-const users = require("./data/users-data");
-const states = require("./data/states-data");
-
-app.use("/users/:userId", (req, res, next) => {
-  const { userId } = req.params;
-  const userFound = users.find((user) => user.id === Number(userId));
-
-  if (userFound) {
-    res.json({ data: userFound });
+app.get("/notes/:noteId", (req, res, next) => {
+  const noteId = Number(req.params.noteId);
+  const foundNote = notes.find((note) => note.id === noteId);
+  if (foundNote) {
+    res.json({ data: foundNote });
   } else {
-    next(`User ID not found: ${userId}`);
+    next(`Note id not found: ${noteId}`);
   }
 });
 
-app.use("/users", (req, res) => {
-  res.json({ data: users });
+app.get("/notes", (req, res) => {
+  res.json({ data: notes });
 });
 
-app.use("/states/:sateCode", (req, res, next) => {
-  const stateCode = req.params.sateCode;
-  console.log(stateCode);
-  if (stateCode in states) {
-    res.json({ data: { stateCode: stateCode, name: states[stateCode] } });
+let lastNoteId = notes.reduce((maxId, note) => Math.max(maxId, note.id), 0);
+
+app.post("/notes", (req, res, next) => {
+  console.log("test req.body");
+  console.log(req.body);
+
+  const { data: { text } = {} } = req.body;
+  console.log(text);
+  if (text) {
+    const newNote = {
+      id: ++lastNoteId,
+      text: text,
+    };
+    notes.push(newNote);
+    res.status(201).json({ data: newNote });
   } else {
-    next(`State code not found: ${stateCode}`);
+    res.sendStatus(400);
   }
 });
-
-app.use("/states", (req, res) => {
-  res.json({ data: states });
+// TODO: Add not-found handler
+app.use((req, res) => {
+  res.status(400).send(`Not found: ${req.path}`);
 });
 
-app.use((req, res, next) => {
-  res.send(`Not found: ${req.originalUrl}`);
-});
-
+// TODO: Add error handler
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.send(err);
+  console.log(err);
+  res.status(400).send(err);
 });
 
 module.exports = app;
