@@ -1,46 +1,44 @@
-const morgan = require("morgan");
 const express = require("express");
-const validateZip = require("./middleware/validateZip");
-const getZoos = require("./utils/getZoos");
 const app = express();
 
-app.use(morgan("dev"));
-app.get("/check/:zip", validateZip, (req, res, next) => {
-  // todo
-  const zip = req.params.zip;
-  const zoo = getZoos(zip);
-  if (zoo) {
-    res.send(`${zip} exists in our records.`);
+const users = require("./data/users-data");
+const states = require("./data/states-data");
+
+app.use("/users/:userId", (req, res, next) => {
+  const { userId } = req.params;
+  const userFound = users.find((user) => user.id === Number(userId));
+
+  if (userFound) {
+    res.json({ data: userFound });
   } else {
-    res.send(`${zip} does not exist in our records.`);
+    next(`User ID not found: ${userId}`);
   }
 });
 
-app.get("/zoos/all", (req, res, next) => {
-  const admin = req.query.admin;
-  if (admin === "true") {
-    res.send(`All zoos: ${getZoos().join("; ")}`);
+app.use("/users", (req, res) => {
+  res.json({ data: users });
+});
+
+app.use("/states/:sateCode", (req, res, next) => {
+  const stateCode = req.params.sateCode;
+  console.log(stateCode);
+  if (stateCode in states) {
+    res.json({ data: { stateCode: stateCode, name: states[stateCode] } });
   } else {
-    res.send("You do not have access to that route.");
+    next(`State code not found: ${stateCode}`);
   }
 });
 
-app.get("/zoos/:zip", validateZip, (req, res, next) => {
-  const zip = req.params.zip;
-  const zoos = getZoos(zip);
-  console.log(zoos);
-  if (zoos && zoos.length > 0) {
-    res.send(`${zip} zoos: ${zoos.join("; ")}`);
-  } else {
-    res.send(`${zip} has no zoos.`);
-  }
+app.use("/states", (req, res) => {
+  res.json({ data: states });
 });
 
 app.use((req, res, next) => {
-  res.send("That route could not be found!");
+  res.send(`Not found: ${req.originalUrl}`);
 });
 
 app.use((err, req, res, next) => {
+  console.error(err);
   res.send(err);
 });
 
