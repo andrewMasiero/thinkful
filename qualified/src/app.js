@@ -1,16 +1,27 @@
 const express = require("express");
 const app = express();
-app.use(express.json());
-const notes = require("./data/notes-data");
 
-app.get("/notes/:noteId", (req, res, next) => {
+const path = require("path");
+const notes = require(path.resolve("src/data/notes-data"));
+
+app.use(express.json());
+
+function findNote(req, res, next) {
   const noteId = Number(req.params.noteId);
   const foundNote = notes.find((note) => note.id === noteId);
   if (foundNote) {
-    res.json({ data: foundNote });
+    req.foundNote = foundNote;
+    next();
   } else {
-    next(`Note id not found: ${noteId}`);
+    next({
+      status: 404,
+      message: `Note id not found: ${noteId}`,
+    });
   }
+}
+
+app.get("/notes/:noteId", findNote, (req, res) => {
+  res.json({ data: req.foundNote });
 });
 
 app.get("/notes", (req, res) => {
@@ -19,32 +30,40 @@ app.get("/notes", (req, res) => {
 
 let lastNoteId = notes.reduce((maxId, note) => Math.max(maxId, note.id), 0);
 
-app.post("/notes", (req, res, next) => {
-  console.log("test req.body");
-  console.log(req.body);
-
+function validateNote(req, res, next) {
   const { data: { text } = {} } = req.body;
-  console.log(text);
   if (text) {
-    const newNote = {
-      id: ++lastNoteId,
-      text: text,
-    };
-    notes.push(newNote);
-    res.status(201).json({ data: newNote });
+    next();
   } else {
-    res.sendStatus(400);
+    next({
+      status: 400,
+      message: "A 'text' property is required.",
+    });
   }
-});
-// TODO: Add not-found handler
-app.use((req, res) => {
-  res.status(400).send(`Not found: ${req.path}`);
+}
+
+app.post("/notes", validateNote, (req, res) => {
+  const newNote = {
+    id: ++lastNoteId, // Increment last id then assign as the current ID
+    text,
+  };
+  notes.push(newNote);
+  res.status(201).json({ data: newNote });
 });
 
-// TODO: Add error handler
-app.use((err, req, res, next) => {
-  console.log(err);
-  res.status(400).send(err);
+// Not found handler
+app.use((req, res, next) => {
+  next({
+    status: 404,
+    message: `Not found: ${req.originalUrl}`,
+  });
+});
+
+// Error handler
+app.use((error, req, res, next) => {
+  console.error(error);
+  const { status = 500, message = "Something went wrong!" } = error;
+  res.status(status).json({ error: message });
 });
 
 module.exports = app;
