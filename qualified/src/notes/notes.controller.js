@@ -1,6 +1,10 @@
 const path = require("path");
 const notes = require(path.resolve("src/data/notes-data"));
 
+function list(req, res) {
+  res.json({ data: notes });
+}
+
 function create(req, res) {
   const { data: { text } = {} } = req.body;
   const newNote = {
@@ -27,10 +31,6 @@ function hasText(req, res, next) {
     return next();
   }
   next({ status: 400, message: "A 'text' property is required." });
-}
-
-function list(req, res) {
-  res.json({ data: notes });
 }
 
 function noteExists(req, res, next) {
@@ -68,4 +68,5 @@ module.exports = {
   read: [noteExists, read],
   update: [noteExists, hasText, update],
   delete: destroy,
+  noteExists,
 };
