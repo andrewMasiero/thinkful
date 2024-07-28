@@ -1,27 +1,13 @@
-function request(input) {
-  return new Promise((resolve, reject) => {
-    input ? resolve("request data") : reject("reject request");
-  });
-}
+let counter = 0;
 
-let promise = request(false);
+let timer = setInterval(function () {
+  console.log("I am an asynchronous message");
 
-// promise.then(
-//   function (data) {
-//     console.log(data);
-//   },
-//   function (error) {
-//     console.error(error);
-//   }
-// );
+  counter += 1;
 
-// Example 2
+  if (counter >= 5) {
+    clearInterval(timer);
+  }
+}, 1000);
 
-promise
-
-  .then(function (data) {
-    console.log(data);
-  })
-  .catch(function (error) {
-    console.error(data);
-  });
+console.log("I am a synchronous message");

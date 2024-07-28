@@ -1,13 +1,14 @@
 const express = require("express");
 const app = express();
-const pastes = require("./data/pastes-data");
 const pastesRouter = require("./pastes/pastes.router");
+const usersRouter = require("./users/users.router");
 
 console.log("Starting module 3.4.2 Static data");
 // TODO: Follow instructions in the checkpoint to implement ths API.
 
 app.use(express.json());
 
+app.use("/users", usersRouter);
 app.use("/pastes", pastesRouter);
 
 // Not found handler
