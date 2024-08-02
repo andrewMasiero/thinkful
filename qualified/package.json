@@ -1,13 +1,18 @@
 {
-  "name": "robust-server-structure-advanced-tips",
+  "name": "solution",
   "version": "1.0.0",
-  "description": "Robust server structure: Advanced Tips",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Thinkful-Ed/web-dev-programs",
+    "directory": "/library/zid-be-robust-server-structure-XX-assignment/solution"
+  },
   "main": "src/server.js",
   "scripts": {
-    "docker:build": "docker image build . -t thinkful-ed/zid-be-robust-server-structure-05-advanced-tips",
-    "docker:run": "docker run --rm -it -p 5000:5000 thinkful-ed/zid-be-robust-server-structure-05-advanced-tips",
+    "docker:build": "docker image build . -t thinkful-ed/zid-be-robust-server-structure-xx-assignment",
+    "docker:run": "docker run --rm -it -p 5000:5000 thinkful-ed/zid-be-robust-server-structure-xx-assignment",
     "docker:stop": "docker stop $(docker ps -q)",
-    "docker:test": "docker run -t thinkful-ed/zid-be-robust-server-structure-05-advanced-tips npm test",
+    "docker:test": "docker run -t thinkful-ed/zid-be-robust-server-structure-xx-assignment npm test",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "start:solution": "npm run -it docker:build && npm run docker:run",

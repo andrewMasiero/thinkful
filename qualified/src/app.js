@@ -1,21 +1,18 @@
 const express = require("express");
 const app = express();
-const notesRouter = require("./notes/notes.router");
-const ratingsRouter = require("./ratings/ratings.router");
+const urlsRouter = require("./urls/urls.router");
 
 app.use(express.json());
-app.use("/notes", notesRouter);
-app.use("/ratings", ratingsRouter);
+// TODO: Add code to meet the requirements and make the tests pass.
+app.use("/urls", urlsRouter);
 
-// Not-found handler
 app.use((req, res, next) => {
-  return next({ status: 404, message: `Not found: ${req.originalUrl}` });
+  next(`Not found: ${req.originalUrl}`);
 });
 
-// Error handler
-app.use((error, req, res, next) => {
-  console.error(error);
-  const { status = 500, message = "Something went wrong!" } = error;
+app.use((err, req, res, next) => {
+  console.error(err);
+  const { status = 500, message = `Something went wrong!` } = err;
   res.status(status).json({ error: message });
 });
 
