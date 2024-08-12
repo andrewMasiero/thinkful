@@ -5,6 +5,24 @@ async function list(req, res) {
   res.send("users");
 }
 
+function bodyDataHas(propertyName) {
+  return function (req, res, next) {
+    const { data = {} } = req.body;
+    if (data[propertyName]) {
+      return next();
+    }
+    next({ status: 400, message: `Must include ${propertyName}` });
+  };
+}
+
+async function create(req, res) {
+  const { data: { username, email } = {} } = req.body;
+  const newUser = new User({ username: username, email: email });
+  await newUser.save();
+  res.status(201).json({ data: newUser });
+}
+
 module.exports = {
   list,
+  create: [bodyDataHas("username"), bodyDataHas("email"), create],
 };
