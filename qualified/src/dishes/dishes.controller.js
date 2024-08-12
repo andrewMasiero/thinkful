@@ -42,28 +42,6 @@ function update(req, res) {
   res.json({ data: dish });
 }
 
-// function update(req, res, next) {
-//     const { data: { id, name, description, price, image_url } = {} } = req.body;
-//     const { dishId } = req.params;
-
-//     if (id && id !== dishId) {
-//       return next({
-//         status: 400,
-//         message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
-//       });
-//     }
-
-//     const updatedDish = {
-//       ...res.locals.dish,
-//       name,
-//       description,
-//       price,
-//       image_url,
-//     };
-
-//     res.json({ data: updatedDish });
-//   }
-
 function dishExists(req, res, next) {
   const { dishId } = req.params;
   const foundDish = dishes.find((dish) => dish.id === dishId);
