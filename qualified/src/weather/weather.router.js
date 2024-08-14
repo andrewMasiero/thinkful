@@ -1,5 +1,5 @@
 const router = require("express").Router({ mergeParams: true });
-const controller = require("./users.controller");
+const controller = require("./weather.controller");
 const methodNotAllowed = require("../errors/methodNotAllowed");
 
 router
@@ -9,7 +9,7 @@ router
   .all(methodNotAllowed);
 
 router
-  .route("/:userId")
+  .route("/:weatherStatusId")
   .get(controller.read)
   .put(controller.update)
   .delete(controller.delete)
